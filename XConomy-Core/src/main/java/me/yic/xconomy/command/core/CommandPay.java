@@ -19,6 +19,7 @@
 package me.yic.xconomy.command.core;
 
 import me.yic.xconomy.AdapterManager;
+import me.yic.xconomy.XConomy;
 import me.yic.xconomy.XConomyLoad;
 import me.yic.xconomy.adapter.comp.CPlayer;
 import me.yic.xconomy.adapter.comp.CSender;
@@ -33,8 +34,12 @@ import me.yic.xconomy.task.ReceivePerCheck;
 
 import java.math.BigDecimal;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class CommandPay extends CommandCore{
+public class CommandPay extends CommandCore {
+    public static final ConcurrentHashMap<UUID, Long> inCooldownPlayers = new ConcurrentHashMap<>();
+
     public static boolean onCommand(CSender sender, String commandName, String[] args) {
         if (!sender.isPlayer()) {
             sendMessages(sender, PREFIX + MessagesManager.systemMessage("§6控制台无法使用该指令"));
@@ -128,6 +133,19 @@ public class CommandPay extends CommandCore{
             return true;
         }
 
+        if (amount.compareTo(BigDecimal.valueOf(XConomyLoad.Config.MAX_PAY)) > 0) {
+            sendMessages(sender, PREFIX + translateColorCodes("over_maxpay")
+                    .replace("%max-pay%", String.format("%.2f", XConomyLoad.Config.MAX_PAY)));
+            return true;
+        }
+
+        if (inCooldownPlayers.containsKey(sender.toPlayer().getUniqueId())) {
+            sendMessages(sender, PREFIX + translateColorCodes("pay_incooldown"));
+            return true;
+        }
+
+        inCooldownPlayers.put(sender.toPlayer().getUniqueId(), System.currentTimeMillis() + XConomyLoad.Config.PAY_COOLDOWN);
+
         String com = commandName + " " + args[0] + " " + amount;
         DataCon.changeplayerdata("PLAYER_COMMAND", sender.toPlayer().getUniqueId(), taxamount, false, com, null);
         sendMessages(sender, PREFIX + translateColorCodes("pay")
@@ -148,4 +166,22 @@ public class CommandPay extends CommandCore{
         return true;
     }
 
+    static {
+        startCacheRemoverTask();
+    }
+
+    private static void startCacheRemoverTask() {
+        CompletableFuture.runAsync(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
+                long now = System.currentTimeMillis();
+                inCooldownPlayers.entrySet().removeIf(entry -> now >= entry.getValue());
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+    }
 }

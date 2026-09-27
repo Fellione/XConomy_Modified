@@ -21,6 +21,7 @@ package me.yic.xconomy.listeners;
 import me.yic.xconomy.AdapterManager;
 import me.yic.xconomy.XConomyLoad;
 import me.yic.xconomy.adapter.comp.CPlayer;
+import me.yic.xconomy.command.core.CommandPay;
 import me.yic.xconomy.data.DataCon;
 import me.yic.xconomy.data.DataLink;
 import me.yic.xconomy.data.caches.Cache;

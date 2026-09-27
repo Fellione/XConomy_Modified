@@ -53,6 +53,9 @@ public class DefaultConfig {
     public int LINES_PER_PAGE = config.getInt("Settings.lines-per-page");
     public boolean DISABLE_CACHE = config.getBoolean("Settings.disable-cache");
 
+    public double MAX_PAY = config.getDouble("Settings.max-pay");
+    public long PAY_COOLDOWN = config.getLong("Settings.pay-cooldown");
+
     public boolean TRANSACTION_RECORD = config.getBoolean("Settings.transaction-record");
     public boolean PAY_TIPS = false;
     public boolean USERNAME_IGNORE_CASE = config.getBoolean("Settings.username-ignore-case");
